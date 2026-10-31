@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#6b1218" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Для Даши</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scene" id="scene">
+      <div class="world" id="world" aria-hidden="true">
+        <div class="glow glow-a"></div>
+        <div class="glow glow-b"></div>
+        <div class="glow glow-c"></div>
+        <div class="glow glow-d"></div>
+        <canvas id="field"></canvas>
+      </div>
+
+      <div class="veil" id="veil" aria-hidden="true"></div>
+      <div class="flash" id="flash" aria-hidden="true"></div>
+
+      <main class="stage">
+        <section class="intro" id="intro" aria-live="polite">
+          <button class="hint-btn" id="tap" type="button">
+            жми
+          </button>
+        </section>
+
+        <section class="letter" id="letter" hidden>
+          <p class="letter__eyebrow">для Даши</p>
+          <div class="letter__title-row">
+            <h1 class="letter__title">Моё сердце<br />бьётся для тебя</h1>
+            <div class="heartbeat" aria-hidden="true">
+              <svg class="heartbeat__svg" viewBox="0 0 64 64">
+                <path
+                  class="heartbeat__path"
+                  d="M32 54S10 40.2 10 26.4C10 18.2 16 14 22.5 14c4 0 7.2 2.2 9.5 5.4C34.3 16.2 37.5 14 41.5 14 48 14 54 18.2 54 26.4 54 40.2 32 54 32 54z"
+                />
+              </svg>
+              <span class="heartbeat__ring"></span>
+              <span class="heartbeat__ring heartbeat__ring--late"></span>
+            </div>
+          </div>
+          <div class="letter__body">
+            <p>
+              Когда ты рядом, внутри всё оживает — будто мир становится теплее
+              на один удар.
+            </p>
+            <p>
+              Спасибо тебе за улыбку, за свет и за то, что рядом с тобой
+              хочется беречь каждый момент.
+            </p>
+            <p class="letter__sign">Я люблю тебя, Даша.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
