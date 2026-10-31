@@ -1,5 +1,6 @@
 (() => {
   const scene = document.getElementById("scene");
+  const anchor = document.getElementById("anchor");
   const world = document.getElementById("world");
   const intro = document.getElementById("intro");
   const tap = document.getElementById("tap");
@@ -44,30 +45,36 @@
   /** @type {Array<ReturnType<typeof makePiece>>} */
   const pieces = [];
 
-  function viewportSize() {
-    const vv = window.visualViewport;
-    // Telegram WebView often reports a different visual viewport than layout
-    const vw = Math.round(vv?.width || window.innerWidth || scene.clientWidth);
-    const vh = Math.round(vv?.height || window.innerHeight || scene.clientHeight);
-    return { vw: Math.max(vw, 1), vh: Math.max(vh, 1) };
+  function coverSide() {
+    // Deliberately larger than the phone screen — no precise fit, just overflow.
+    const candidates = [
+      window.screen?.width || 0,
+      window.screen?.height || 0,
+      window.innerWidth || 0,
+      window.innerHeight || 0,
+      document.documentElement?.clientWidth || 0,
+      document.documentElement?.clientHeight || 0,
+      window.visualViewport?.width || 0,
+      window.visualViewport?.height || 0,
+      480,
+    ];
+    const longest = Math.max(...candidates);
+    return Math.ceil(longest * 2.4);
   }
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const side = coverSide();
+    width = side;
+    height = side;
 
-    // Match the oversized .world box (with bleed), not just the visible viewport.
-    // Old bug: canvas was viewport-sized while .world was inset:-20% → empty strips
-    // on the right/bottom (especially noticeable inside Telegram).
-    const rect = world.getBoundingClientRect();
-    const { vw, vh } = viewportSize();
-    width = Math.max(1, Math.round(rect.width) || Math.round(vw * 1.4));
-    height = Math.max(1, Math.round(rect.height) || Math.round(vh * 1.4));
+    anchor.style.width = `${side}px`;
+    anchor.style.height = `${side}px`;
 
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
-    // Let CSS (inset:0; width/height 100%) size the element to .world
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
+    canvas.width = Math.floor(side * dpr);
+    canvas.height = Math.floor(side * dpr);
+    canvas.style.width = `${side}px`;
+    canvas.style.height = `${side}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
@@ -373,14 +380,11 @@
   }
 
   function syncSurface(forceSeed = false) {
-    const prevW = width;
-    const prevH = height;
+    const prev = width;
     resize();
-    const changed =
-      forceSeed ||
-      Math.abs(width - prevW) > 2 ||
-      Math.abs(height - prevH) > 2;
-    if (changed && mode === "wall" && !opened) seedWall();
+    if ((forceSeed || width !== prev) && mode === "wall" && !opened) {
+      seedWall();
+    }
   }
 
   syncSurface(true);
@@ -396,24 +400,10 @@
     }
   }
 
-  // Telegram often settles layout a beat after open — remeasure & refill
-  window.setTimeout(() => syncSurface(), 50);
-  window.setTimeout(() => syncSurface(), 250);
-  window.setTimeout(() => syncSurface(), 600);
-
   window.addEventListener("resize", () => syncSurface());
   window.addEventListener("orientationchange", () => {
-    window.setTimeout(() => syncSurface(true), 100);
+    window.setTimeout(() => syncSurface(true), 150);
   });
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", () => syncSurface());
-    window.visualViewport.addEventListener("scroll", () => syncSurface());
-  }
-
-  if (typeof ResizeObserver !== "undefined") {
-    new ResizeObserver(() => syncSurface()).observe(world);
-  }
 
   // Whole first screen is the interaction — "жми" is only a whisper
   tap.addEventListener("click", openHeart);
