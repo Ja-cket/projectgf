@@ -4,8 +4,13 @@
   const world = document.getElementById("world");
   const intro = document.getElementById("intro");
   const tap = document.getElementById("tap");
+  const tap2 = document.getElementById("tap2");
+  const reveal = document.getElementById("reveal");
+  const heartStage = document.getElementById("heartStage");
+  const heartWrap = document.getElementById("heartWrap");
+  const anatomy = document.getElementById("anatomy");
   const letter = document.getElementById("letter");
-  const heartbeat = letter.querySelector(".heartbeat");
+  const heartSlot = document.getElementById("heartSlot");
   const flash = document.getElementById("flash");
   const canvas = document.getElementById("field");
   const ctx = canvas.getContext("2d");
@@ -13,6 +18,11 @@
   const reduceMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   ).matches;
+
+  // Normalize stroke drawing across every outline path
+  anatomy.querySelectorAll(".part__stroke").forEach((node) => {
+    node.setAttribute("pathLength", "1");
+  });
 
   // Deep red / crimson / wine — not pastel pink
   const COLORS = [
@@ -35,9 +45,9 @@
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let opened = false;
+  let phase = "wall"; // wall | dive | draw | wait | dock | letter
   let rafId = 0;
-  let mode = "wall"; // wall | dive | calm
+  let mode = "wall"; // canvas mode: wall | dive | calm
   let diveStart = 0;
   let cameraZ = 0;
   let shakeAmp = 0;
@@ -325,18 +335,92 @@
     rafId = requestAnimationFrame(tick);
   }
 
-  function showLetter() {
+  function startHeartDraw() {
+    phase = "draw";
     intro.hidden = true;
+    reveal.hidden = false;
+    tap2.hidden = true;
+
+    if (reduceMotion) {
+      anatomy.classList.add("is-drawn");
+      finishHeartDraw();
+      return;
+    }
+
+    // restart draw sequence cleanly
+    anatomy.classList.remove("is-drawing", "is-drawn");
+    void anatomy.offsetWidth;
+    anatomy.classList.add("is-drawing");
+
+    // last fill delay ~3.9s + 0.7s ≈ 4.6s
+    window.setTimeout(finishHeartDraw, 4800);
+  }
+
+  function finishHeartDraw() {
+    anatomy.classList.remove("is-drawing");
+    anatomy.classList.add("is-drawn");
+    phase = "wait";
+    reveal.classList.add("is-ready");
+    tap2.hidden = false;
+    if (navigator.vibrate) navigator.vibrate(18);
+  }
+
+  function dockHeartAndShowLetter() {
+    if (phase !== "wait") return;
+    phase = "dock";
+    tap2.hidden = true;
+    reveal.classList.remove("is-ready");
+
+    // Prepare letter layout (invisible) so the slot has a real target rect
     letter.hidden = false;
+    letter.style.visibility = "hidden";
+    letter.style.pointerEvents = "none";
+
+    const from = heartWrap.getBoundingClientRect();
+    heartSlot.appendChild(heartWrap);
+    heartWrap.classList.add("is-docked");
+    const to = heartWrap.getBoundingClientRect();
+
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    const sx = from.width / Math.max(to.width, 1);
+    const sy = from.height / Math.max(to.height, 1);
+
+    heartWrap.style.transition = "none";
+    heartWrap.style.transformOrigin = "top left";
+    heartWrap.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+
+    // Hide empty reveal stage
+    heartStage.style.opacity = "0";
+
     requestAnimationFrame(() => {
-      letter.classList.add("is-visible");
-      heartbeat.classList.add("is-beating");
+      requestAnimationFrame(() => {
+        const duration = reduceMotion ? 0 : 1100;
+        heartWrap.style.transition = reduceMotion
+          ? "none"
+          : `transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        heartWrap.style.transform = "translate(0, 0) scale(1)";
+
+        window.setTimeout(() => {
+          heartWrap.style.transition = "";
+          heartWrap.style.transform = "";
+          heartWrap.style.transformOrigin = "";
+          reveal.hidden = true;
+          heartStage.style.opacity = "";
+
+          letter.style.visibility = "";
+          letter.style.pointerEvents = "";
+          phase = "letter";
+          letter.classList.add("is-visible");
+          heartWrap.classList.add("is-beating");
+        }, duration + 40);
+      });
     });
   }
 
-  function openHeart() {
-    if (opened) return;
-    opened = true;
+  function beginJourney() {
+    if (phase !== "wall") return;
+    phase = "dive";
     tap.disabled = true;
 
     if (reduceMotion) {
@@ -345,7 +429,7 @@
       scene.classList.add("is-clear");
       pieces.length = 0;
       mode = "calm";
-      window.setTimeout(showLetter, 100);
+      window.setTimeout(startHeartDraw, 120);
       return;
     }
 
@@ -365,24 +449,36 @@
       mode = "calm";
       cameraZ = 0;
       pieces.length = 0;
-      for (let i = 0; i < 28; i += 1) {
+      for (let i = 0; i < 22; i += 1) {
         const p = makePiece("wall");
         p.z = rand(220, 500);
-        p.alpha *= 0.42;
-        p.size *= 0.7;
+        p.alpha *= 0.35;
+        p.size *= 0.65;
         pieces.push(p);
       }
       scene.classList.remove("is-diving");
       scene.classList.add("is-clear");
       world.classList.remove("is-rushing");
-      showLetter();
+      window.setTimeout(startHeartDraw, 280);
     }, 2100);
+  }
+
+  function onSceneTap(e) {
+    if (e.target.closest(".letter")) return;
+
+    if (phase === "wall") {
+      beginJourney();
+      return;
+    }
+    if (phase === "wait") {
+      dockHeartAndShowLetter();
+    }
   }
 
   function syncSurface(forceSeed = false) {
     const prev = width;
     resize();
-    if ((forceSeed || width !== prev) && mode === "wall" && !opened) {
+    if ((forceSeed || width !== prev) && mode === "wall" && phase === "wall") {
       seedWall();
     }
   }
@@ -405,13 +501,15 @@
     window.setTimeout(() => syncSurface(true), 150);
   });
 
-  // Whole first screen is the interaction — "жми" is only a whisper
-  tap.addEventListener("click", openHeart);
-  scene.addEventListener("click", (e) => {
-    if (opened) return;
-    if (e.target.closest(".letter")) return;
-    openHeart();
+  tap.addEventListener("click", (e) => {
+    e.stopPropagation();
+    beginJourney();
   });
+  tap2.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dockHeartAndShowLetter();
+  });
+  scene.addEventListener("click", onSceneTap);
 
   window.addEventListener("pagehide", () => {
     cancelAnimationFrame(rafId);
