@@ -80,12 +80,20 @@ body {
   }
 }
 
-.world {
+/* Oversized layer, centered — intentionally bigger than any phone screen */
+.world-anchor {
   position: absolute;
-  /* Extra bleed so Telegram viewport quirks + idle scale never show bare edges */
-  inset: -20%;
-  width: auto;
-  height: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.world {
+  position: relative;
+  width: 100%;
+  height: 100%;
   transform-origin: 50% 50%;
   transform-style: preserve-3d;
   will-change: transform, filter;
@@ -102,32 +110,32 @@ body {
 @keyframes world-breathe {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) scale(1.02);
+    transform: scale(1);
   }
   50% {
-    transform: translate3d(0, -0.6%, 10px) scale(1.04);
+    transform: scale(1.03);
   }
 }
 
 @keyframes world-rush {
   0% {
-    transform: translate3d(0, 0, 0) scale(1.02);
+    transform: scale(1);
     filter: blur(0);
   }
   18% {
-    transform: translate3d(-1%, 1%, 40px) scale(1.14);
+    transform: scale(1.14) translate3d(-1%, 1%, 0);
     filter: blur(1.5px);
   }
   42% {
-    transform: translate3d(2%, -1.5%, 180px) scale(1.6);
+    transform: scale(1.65) translate3d(2%, -1.5%, 0);
     filter: blur(4px) brightness(1.12);
   }
   68% {
-    transform: translate3d(-1%, 0.5%, 380px) scale(2.25);
+    transform: scale(2.35) translate3d(-1%, 0.5%, 0);
     filter: blur(7px) brightness(1.2);
   }
   100% {
-    transform: translate3d(0, 0, 560px) scale(2.85);
+    transform: scale(2.9);
     filter: blur(0) brightness(1.08);
   }
 }
