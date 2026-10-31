@@ -310,22 +310,195 @@ body {
   }
 }
 
+/* —— Heart reveal (full-screen anatomical draw) —— */
+.reveal {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.reveal.is-ready {
+  pointer-events: auto;
+}
+
+.heart-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.heart-wrap {
+  width: min(78vw, 340px);
+  height: auto;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  filter: drop-shadow(0 18px 40px rgba(40, 0, 8, 0.55));
+}
+
+.heart-wrap.is-docked {
+  width: 72px;
+  filter: drop-shadow(0 8px 14px rgba(40, 0, 8, 0.4));
+}
+
+.heart-wrap.is-beating .anatomy {
+  animation: heart-lubdub 1.35s ease-in-out infinite;
+  transform-origin: 50% 55%;
+}
+
+.anatomy {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.part__fill {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.part__stroke {
+  fill: none;
+  stroke: rgba(255, 210, 200, 0.85);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0.95;
+}
+
+.part__stroke--thin {
+  stroke-width: 1.1;
+  stroke: rgba(255, 170, 160, 0.75);
+}
+
+.anatomy.is-drawing .part[data-part="1"] .part__stroke,
+.anatomy.is-drawing .part[data-part="2"] .part__stroke,
+.anatomy.is-drawing .part[data-part="3"] .part__stroke,
+.anatomy.is-drawing .part[data-part="4"] .part__stroke,
+.anatomy.is-drawing .part[data-part="5"] .part__stroke,
+.anatomy.is-drawing .part[data-part="6"] .part__stroke,
+.anatomy.is-drawing .part[data-part="7"] .part__stroke,
+.anatomy.is-drawing .part[data-part="8"] .part__stroke {
+  animation: stroke-draw 0.85s ease forwards;
+}
+
+.anatomy.is-drawing .part[data-part="1"] .part__fill,
+.anatomy.is-drawing .part[data-part="2"] .part__fill,
+.anatomy.is-drawing .part[data-part="3"] .part__fill,
+.anatomy.is-drawing .part[data-part="4"] .part__fill,
+.anatomy.is-drawing .part[data-part="5"] .part__fill,
+.anatomy.is-drawing .part[data-part="6"] .part__fill,
+.anatomy.is-drawing .part[data-part="7"] .part__fill,
+.anatomy.is-drawing .part[data-part="8"] .part__fill {
+  animation: fill-in 0.7s ease forwards;
+}
+
+.anatomy.is-drawing .part[data-part="1"] .part__stroke { animation-delay: 0.05s; }
+.anatomy.is-drawing .part[data-part="1"] .part__fill { animation-delay: 0.45s; }
+
+.anatomy.is-drawing .part[data-part="2"] .part__stroke { animation-delay: 0.55s; }
+.anatomy.is-drawing .part[data-part="2"] .part__fill { animation-delay: 0.95s; }
+
+.anatomy.is-drawing .part[data-part="3"] .part__stroke { animation-delay: 1.05s; }
+.anatomy.is-drawing .part[data-part="3"] .part__fill { animation-delay: 1.45s; }
+
+.anatomy.is-drawing .part[data-part="4"] .part__stroke { animation-delay: 1.55s; }
+.anatomy.is-drawing .part[data-part="4"] .part__fill { animation-delay: 1.95s; }
+
+.anatomy.is-drawing .part[data-part="5"] .part__stroke { animation-delay: 2.05s; }
+.anatomy.is-drawing .part[data-part="5"] .part__fill { animation-delay: 2.45s; }
+
+.anatomy.is-drawing .part[data-part="6"] .part__stroke { animation-delay: 2.55s; }
+.anatomy.is-drawing .part[data-part="6"] .part__fill { animation-delay: 2.95s; }
+
+.anatomy.is-drawing .part[data-part="7"] .part__stroke { animation-delay: 3.05s; }
+.anatomy.is-drawing .part[data-part="7"] .part__fill { animation-delay: 3.45s; }
+
+.anatomy.is-drawing .part[data-part="8"] .part__stroke { animation-delay: 3.55s; }
+.anatomy.is-drawing .part[data-part="8"] .part__fill { animation-delay: 3.9s; }
+
+.anatomy.is-drawn .part__fill {
+  opacity: 1;
+  animation: none;
+}
+
+.anatomy.is-drawn .part__stroke {
+  opacity: 0.35;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+@keyframes stroke-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0.2;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.55;
+  }
+}
+
+@keyframes fill-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes heart-lubdub {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.06);
+  }
+  24% {
+    transform: scale(0.98);
+  }
+  36% {
+    transform: scale(1.04);
+  }
+  52% {
+    transform: scale(1);
+  }
+}
+
+.hint-btn--second {
+  position: absolute;
+  bottom: calc(28px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.hint-btn--second[hidden] {
+  display: none;
+}
+
+/* —— Letter —— */
 .letter {
   width: min(100%, 28rem);
   text-align: left;
   opacity: 0;
-  transform: translateY(22px) scale(0.98);
 }
 
 .letter.is-visible {
-  animation: letter-in 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-@keyframes letter-in {
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  opacity: 1;
 }
 
 .letter__eyebrow {
@@ -335,6 +508,8 @@ body {
   text-transform: uppercase;
   color: #ff8a8a;
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(12px);
 }
 
 .letter__title-row {
@@ -354,79 +529,16 @@ body {
   color: var(--cream);
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(14px);
 }
 
-.heartbeat {
-  position: relative;
-  width: 64px;
-  height: 64px;
+.letter__heart-slot {
+  width: 72px;
+  height: 84px;
   flex-shrink: 0;
-  opacity: 0;
   display: grid;
   place-items: center;
-}
-
-.heartbeat__svg {
-  width: 54px;
-  height: 54px;
-  overflow: visible;
-}
-
-.heartbeat__path {
-  fill: #ff3b4a;
-  transform-origin: 50% 50%;
-  transform-box: fill-box;
-  filter: drop-shadow(0 8px 16px rgba(255, 40, 60, 0.4));
-}
-
-.heartbeat.is-beating .heartbeat__path {
-  animation: heart-lubdub 1.15s ease-in-out infinite;
-}
-
-.heartbeat__ring {
-  position: absolute;
-  inset: 4px;
-  border: 1.5px solid rgba(255, 80, 90, 0.4);
-  border-radius: 50%;
-  opacity: 0;
-}
-
-.heartbeat.is-beating .heartbeat__ring {
-  animation: heart-ripple 1.15s ease-out infinite;
-}
-
-.heartbeat.is-beating .heartbeat__ring--late {
-  animation-delay: 0.28s;
-}
-
-@keyframes heart-lubdub {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  14% {
-    transform: scale(1.18);
-  }
-  28% {
-    transform: scale(0.94);
-  }
-  42% {
-    transform: scale(1.12);
-  }
-  58% {
-    transform: scale(1);
-  }
-}
-
-@keyframes heart-ripple {
-  0% {
-    transform: scale(0.75);
-    opacity: 0.45;
-  }
-  100% {
-    transform: scale(1.45);
-    opacity: 0;
-  }
 }
 
 .letter__body {
@@ -441,6 +553,8 @@ body {
   color: rgba(255, 232, 224, 0.86);
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.28);
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(16px);
 }
 
 .letter__sign {
@@ -451,54 +565,51 @@ body {
 
 .letter.is-visible .letter__eyebrow,
 .letter.is-visible .letter__title,
-.letter.is-visible .heartbeat,
 .letter.is-visible .letter__body p {
-  animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: rise-soft 1.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .letter.is-visible .letter__eyebrow {
-  animation-delay: 0.12s;
+  animation-delay: 0.15s;
 }
 
 .letter.is-visible .letter__title {
-  animation-delay: 0.28s;
-}
-
-.letter.is-visible .heartbeat {
-  animation-delay: 0.38s;
+  animation-delay: 0.45s;
 }
 
 .letter.is-visible .letter__body p:nth-child(1) {
-  animation-delay: 0.62s;
+  animation-delay: 0.85s;
 }
 
 .letter.is-visible .letter__body p:nth-child(2) {
-  animation-delay: 0.9s;
+  animation-delay: 1.35s;
 }
 
 .letter.is-visible .letter__body p:nth-child(3) {
-  animation-delay: 1.18s;
+  animation-delay: 1.85s;
 }
 
-@keyframes rise {
-  from {
+@keyframes rise-soft {
+  0% {
     opacity: 0;
-    transform: translateY(14px);
+    filter: blur(8px);
+    transform: translateY(16px);
   }
-  to {
+  45% {
+    opacity: 0.55;
+    filter: blur(3px);
+    transform: translateY(8px);
+  }
+  100% {
     opacity: 1;
+    filter: blur(0);
     transform: translateY(0);
   }
 }
 
 @media (max-width: 380px) {
   .letter__title-row {
-    grid-template-columns: 1fr;
-    justify-items: start;
-  }
-
-  .heartbeat {
-    justify-self: start;
+    grid-template-columns: 1fr auto;
   }
 }
 
@@ -508,24 +619,26 @@ body {
   .scene.is-diving,
   .hint-btn,
   .flash.is-on,
-  .letter.is-visible,
   .letter.is-visible .letter__eyebrow,
   .letter.is-visible .letter__title,
-  .letter.is-visible .heartbeat,
   .letter.is-visible .letter__body p,
-  .heartbeat.is-beating .heartbeat__path,
-  .heartbeat.is-beating .heartbeat__ring {
+  .heart-wrap.is-beating .anatomy,
+  .anatomy.is-drawing .part__stroke,
+  .anatomy.is-drawing .part__fill {
     animation: none !important;
   }
 
   .intro.is-leaving,
-  .letter.is-visible,
   .letter.is-visible .letter__eyebrow,
   .letter.is-visible .letter__title,
-  .letter.is-visible .heartbeat,
-  .letter.is-visible .letter__body p {
+  .letter.is-visible .letter__body p,
+  .part__fill {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+
+  .part__stroke {
+    stroke-dashoffset: 0;
   }
 }
