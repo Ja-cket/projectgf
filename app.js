@@ -44,14 +44,30 @@
   /** @type {Array<ReturnType<typeof makePiece>>} */
   const pieces = [];
 
+  function viewportSize() {
+    const vv = window.visualViewport;
+    // Telegram WebView often reports a different visual viewport than layout
+    const vw = Math.round(vv?.width || window.innerWidth || scene.clientWidth);
+    const vh = Math.round(vv?.height || window.innerHeight || scene.clientHeight);
+    return { vw: Math.max(vw, 1), vh: Math.max(vh, 1) };
+  }
+
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    width = window.innerWidth;
-    height = window.innerHeight;
+
+    // Match the oversized .world box (with bleed), not just the visible viewport.
+    // Old bug: canvas was viewport-sized while .world was inset:-20% → empty strips
+    // on the right/bottom (especially noticeable inside Telegram).
+    const rect = world.getBoundingClientRect();
+    const { vw, vh } = viewportSize();
+    width = Math.max(1, Math.round(rect.width) || Math.round(vw * 1.4));
+    height = Math.max(1, Math.round(rect.height) || Math.round(vh * 1.4));
+
     canvas.width = Math.floor(width * dpr);
     canvas.height = Math.floor(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    // Let CSS (inset:0; width/height 100%) size the element to .world
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
@@ -69,12 +85,12 @@
       const cx = width * 0.5;
       const cy = height * 0.48;
       const dist = Math.hypot(x - cx, y - cy);
-      const clearR = Math.min(width, height) * 0.09;
+      const clearR = Math.min(width, height) * 0.055;
 
-      // If too close to center, push outward so hint stays readable but curtain stays thick
+      // Tiny gap at center so "жми" stays readable; curtain stays thick around it
       if (dist < clearR) {
         const angle = Math.atan2(y - cy, x - cx) || rand(0, Math.PI * 2);
-        const push = clearR + rand(0, clearR * 0.8);
+        const push = clearR + rand(0, clearR * 0.5);
         x = cx + Math.cos(angle) * push;
         y = cy + Math.sin(angle) * push;
       }
@@ -86,12 +102,12 @@
         z: rand(20, 480),
         baseX: x,
         baseY: y,
-        size: rand(16, 46),
+        size: rand(18, 52),
         rot: rand(0, Math.PI * 2),
         spin: rand(-0.015, 0.015),
         wobble: rand(0, Math.PI * 2),
         wobbleSpeed: rand(0.006, 0.018),
-        alpha: rand(0.55, 0.98),
+        alpha: rand(0.6, 1),
         color: COLORS[(Math.random() * COLORS.length) | 0],
         vx: 0,
         vy: 0,
@@ -110,12 +126,12 @@
       z: cameraZ + rand(40, 720),
       baseX: 0,
       baseY: 0,
-      size: rand(14, 52),
+      size: rand(16, 56),
       rot: rand(0, Math.PI * 2),
       spin: rand(-0.16, 0.16),
       wobble: rand(0, Math.PI * 2),
       wobbleSpeed: rand(0.02, 0.07),
-      alpha: rand(0.5, 1),
+      alpha: rand(0.55, 1),
       color: COLORS[(Math.random() * COLORS.length) | 0],
       vx: Math.cos(angle) * rand(0.4, 3.2),
       vy: Math.sin(angle) * rand(0.4, 3.2),
@@ -127,20 +143,20 @@
 
   function seedWall() {
     pieces.length = 0;
-    // Heavy coverage — overlapping curtain, not sparse confetti
+    // Heavier curtain — overlapping coverage edge to edge
     const area = width * height;
-    const count = Math.round(Math.min(520, Math.max(280, area / 1400)));
+    const count = Math.round(Math.min(700, Math.max(360, area / 1100)));
     for (let i = 0; i < count; i += 1) {
       pieces.push(makePiece("wall"));
     }
 
     // Extra near-layer blobs to kill empty gaps
-    const nearCount = Math.round(count * 0.35);
+    const nearCount = Math.round(count * 0.45);
     for (let i = 0; i < nearCount; i += 1) {
       const p = makePiece("wall");
-      p.z = rand(18, 110);
-      p.size = rand(28, 64);
-      p.alpha = rand(0.65, 1);
+      p.z = rand(16, 100);
+      p.size = rand(32, 72);
+      p.alpha = rand(0.7, 1);
       pieces.push(p);
     }
   }
@@ -356,8 +372,18 @@
     }, 2100);
   }
 
-  resize();
-  seedWall();
+  function syncSurface(forceSeed = false) {
+    const prevW = width;
+    const prevH = height;
+    resize();
+    const changed =
+      forceSeed ||
+      Math.abs(width - prevW) > 2 ||
+      Math.abs(height - prevH) > 2;
+    if (changed && mode === "wall" && !opened) seedWall();
+  }
+
+  syncSurface(true);
   world.classList.add("is-idle");
 
   if (!reduceMotion) {
@@ -370,10 +396,24 @@
     }
   }
 
-  window.addEventListener("resize", () => {
-    resize();
-    if (mode === "wall" && !opened) seedWall();
+  // Telegram often settles layout a beat after open — remeasure & refill
+  window.setTimeout(() => syncSurface(), 50);
+  window.setTimeout(() => syncSurface(), 250);
+  window.setTimeout(() => syncSurface(), 600);
+
+  window.addEventListener("resize", () => syncSurface());
+  window.addEventListener("orientationchange", () => {
+    window.setTimeout(() => syncSurface(true), 100);
   });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => syncSurface());
+    window.visualViewport.addEventListener("scroll", () => syncSurface());
+  }
+
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(() => syncSurface()).observe(world);
+  }
 
   // Whole first screen is the interaction — "жми" is only a whisper
   tap.addEventListener("click", openHeart);
