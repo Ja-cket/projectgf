@@ -277,7 +277,7 @@
     if (mode === "dive") {
       const t = (now - diveStart) / 2150;
       cameraZ = Math.min(580, t * t * 640);
-      shakeAmp = Math.max(0, 1 - t) * 12;
+      shakeAmp = Math.max(0, 1 - t) * 4.5;
 
       if (t < 0.75 && Math.random() < 0.7) spawnDiveBurst(5);
 
@@ -371,49 +371,56 @@
     tap2.hidden = true;
     reveal.classList.remove("is-ready");
 
-    // Prepare letter layout (invisible) so the slot has a real target rect
-    letter.hidden = false;
-    letter.style.visibility = "hidden";
-    letter.style.pointerEvents = "none";
-
+    // Measure start while heart is still fully visible in the center
     const from = heartWrap.getBoundingClientRect();
-    heartSlot.appendChild(heartWrap);
-    heartWrap.classList.add("is-docked");
-    const to = heartWrap.getBoundingClientRect();
 
-    const dx = from.left - to.left;
-    const dy = from.top - to.top;
-    const sx = from.width / Math.max(to.width, 1);
-    const sy = from.height / Math.max(to.height, 1);
+    // Lay out the letter off-screen-visually but WITHOUT visibility:hidden
+    // (that was hiding the heart mid-FLIP and caused the "blink").
+    letter.hidden = false;
+    letter.style.opacity = "0";
+    letter.style.pointerEvents = "none";
+    const to = heartSlot.getBoundingClientRect();
 
+    const duration = reduceMotion ? 0 : 1250;
+
+    // Fly with position:fixed so it never gets clipped/hidden by parents
+    heartWrap.classList.add("is-flying");
+    heartWrap.style.left = `${from.left}px`;
+    heartWrap.style.top = `${from.top}px`;
+    heartWrap.style.width = `${from.width}px`;
+    heartWrap.style.transform = "none";
     heartWrap.style.transition = "none";
-    heartWrap.style.transformOrigin = "top left";
-    heartWrap.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
 
-    // Hide empty reveal stage
-    heartStage.style.opacity = "0";
+    // Detach from reveal stage into body-level fixed flight
+    document.body.appendChild(heartWrap);
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const duration = reduceMotion ? 0 : 1100;
         heartWrap.style.transition = reduceMotion
           ? "none"
-          : `transform ${duration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-        heartWrap.style.transform = "translate(0, 0) scale(1)";
+          : `left ${duration}ms cubic-bezier(0.22, 1, 0.36, 1), top ${duration}ms cubic-bezier(0.22, 1, 0.36, 1), width ${duration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        heartWrap.style.left = `${to.left}px`;
+        heartWrap.style.top = `${to.top}px`;
+        heartWrap.style.width = `${to.width}px`;
 
         window.setTimeout(() => {
+          // Settle into the letter slot
+          heartWrap.classList.remove("is-flying");
+          heartWrap.classList.add("is-docked");
+          heartWrap.style.left = "";
+          heartWrap.style.top = "";
+          heartWrap.style.width = "";
           heartWrap.style.transition = "";
           heartWrap.style.transform = "";
-          heartWrap.style.transformOrigin = "";
-          reveal.hidden = true;
-          heartStage.style.opacity = "";
+          heartSlot.appendChild(heartWrap);
 
-          letter.style.visibility = "";
+          reveal.hidden = true;
+          letter.style.opacity = "";
           letter.style.pointerEvents = "";
           phase = "letter";
           letter.classList.add("is-visible");
           heartWrap.classList.add("is-beating");
-        }, duration + 40);
+        }, duration + 30);
       });
     });
   }
@@ -459,8 +466,8 @@
       scene.classList.remove("is-diving");
       scene.classList.add("is-clear");
       world.classList.remove("is-rushing");
-      window.setTimeout(startHeartDraw, 280);
-    }, 2100);
+      window.setTimeout(startHeartDraw, 320);
+    }, 2350);
   }
 
   function onSceneTap(e) {
