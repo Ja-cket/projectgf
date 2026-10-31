@@ -143,7 +143,7 @@
       z: cameraZ + rand(40, 720),
       baseX: 0,
       baseY: 0,
-      size: rand(16, 56),
+      size: rand(7, 24),
       rot: rand(0, Math.PI * 2),
       spin: rand(-0.16, 0.16),
       wobble: rand(0, Math.PI * 2),
@@ -279,7 +279,7 @@
       cameraZ = Math.min(580, t * t * 640);
       shakeAmp = Math.max(0, 1 - t) * 4.5;
 
-      if (t < 0.75 && Math.random() < 0.7) spawnDiveBurst(5);
+      if (t < 0.9 && pieces.length < 2600) spawnDiveBurst(26);
 
       for (const p of pieces) {
         if (p.vz === 0 && p.baseX) {
@@ -303,11 +303,11 @@
     } else if (mode === "wall") {
       for (const p of pieces) updateWall(p, now);
     } else {
-      if (pieces.length < 36 && Math.random() < 0.04) {
+      if (pieces.length < 260 && Math.random() < 0.6) {
         const p = makePiece("wall");
         p.z = rand(200, 460);
-        p.alpha *= 0.5;
-        p.size *= 0.75;
+        p.alpha *= 0.7;
+        p.size *= 0.4;
         pieces.push(p);
       }
       for (let i = pieces.length - 1; i >= 0; i -= 1) {
@@ -448,7 +448,7 @@
     scene.classList.add("is-diving");
     intro.classList.add("is-leaving");
     flash.classList.add("is-on");
-    spawnDiveBurst(70);
+    spawnDiveBurst(500);
 
     if (navigator.vibrate) navigator.vibrate([16, 35, 16, 35, 28]);
 
@@ -456,11 +456,11 @@
       mode = "calm";
       cameraZ = 0;
       pieces.length = 0;
-      for (let i = 0; i < 22; i += 1) {
+      for (let i = 0; i < 180; i += 1) {
         const p = makePiece("wall");
-        p.z = rand(220, 500);
-        p.alpha *= 0.35;
-        p.size *= 0.65;
+        p.z = rand(200, 500);
+        p.alpha *= 0.6;
+        p.size *= 0.4;
         pieces.push(p);
       }
       scene.classList.remove("is-diving");
